@@ -1,0 +1,112 @@
+@startuml Library Management System ERD
+
+' Styling
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
+
+' Entities
+entity "User" as user {
+    * id : Long <<PK>>
+    --
+    * username : String
+    * password : String
+    * email : String
+    * role : Role
+    created_at : LocalDateTime
+    updated_at : LocalDateTime
+}
+
+entity "Book" as book {
+    * id : Long <<PK>>
+    --
+    * title : String
+    * isbn : String <<unique>>
+    language : String
+    publication_year : Integer
+    edition : String
+    summary : Text
+    cover_image_url : String
+    * total_copies : Integer
+    * available_copies : Integer
+    created_at : LocalDateTime
+    updated_at : LocalDateTime
+}
+
+entity "Author" as author {
+    * id : Long <<PK>>
+    --
+    * name : String
+    biography : Text
+    nationality : String
+    birth_date : String
+}
+
+entity "Category" as category {
+    * id : Long <<PK>>
+    --
+    * name : String
+    parent_id : Long <<FK>>
+}
+
+entity "Publisher" as publisher {
+    * id : Long <<PK>>
+    --
+    * name : String
+    description : Text
+    address : String
+    phone : String
+    email : String
+    website : String
+}
+
+entity "Member" as member {
+    * id : Long <<PK>>
+    --
+    * membership_number : String <<unique>>
+    * first_name : String
+    * last_name : String
+    * email : String <<unique>>
+    phone : String
+    address : String
+    * status : MembershipStatus
+    joined_date : LocalDateTime
+}
+
+entity "BorrowRecord" as borrow {
+    * id : Long <<PK>>
+    --
+    * book_id : Long <<FK>>
+    * member_id : Long <<FK>>
+    * issued_by_id : Long <<FK>>
+    * borrow_date : LocalDateTime
+    * due_date : LocalDateTime
+    return_date : LocalDateTime
+    returned_to_id : Long <<FK>>
+    * status : BorrowStatus
+    notes : String
+}
+
+entity "Role" as role {
+    * id : Long <<PK>>
+    --
+    * name : String
+}
+
+' Relationships
+book "1" *-- "0..*" borrow
+member "1" *-- "0..*" borrow
+user "1" *-- "0..*" borrow : issued by
+user "1" *-- "0..*" borrow : returned to
+
+book "0..*" o-- "1" publisher
+book "0..*" }o--o{ "0..*" author
+book "0..*" }o--o{ "0..*" category
+
+category "0..*" o-- "0..1" category : parent
+
+user "1..*" }o--o{ "1..*" role
+
+@enduml 
