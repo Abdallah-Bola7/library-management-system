@@ -13,6 +13,9 @@ public interface BorrowService {
     BorrowRecordDTO getBorrowRecord(Long id);
     Page<BorrowRecordDTO> getMemberBorrowHistory(Long memberId, Pageable pageable);
     Page<BorrowRecordDTO> getBookBorrowHistory(Long bookId, Pageable pageable);
+    Page<BorrowRecordDTO> getAllBorrowRecords(Pageable pageable);
+    Page<BorrowRecordDTO> getCurrentBorrowings(Pageable pageable);
+    Page<BorrowRecordDTO> getOverdueBorrowings(Pageable pageable);
     List<BorrowRecordDTO> getOverdueBooks(LocalDateTime asOf);
     boolean hasMemberReachedBorrowingLimit(Long memberId);
     boolean hasOverdueBooks(Long memberId);

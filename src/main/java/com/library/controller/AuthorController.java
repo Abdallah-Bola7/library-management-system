@@ -27,28 +27,40 @@ public class AuthorController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN')")
     public ResponseEntity<AuthorDTO> updateAuthor(@PathVariable Long id, @Valid @RequestBody AuthorDTO authorDTO) {
-        return ResponseEntity.ok(authorService.updateAuthor(id, authorDTO));
+        return authorService.updateAuthor(id, authorDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AuthorDTO> getAuthor(@PathVariable Long id) {
-        return ResponseEntity.ok(authorService.getAuthor(id));
+        return authorService.getAuthor(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteAuthor(@PathVariable Long id) {
-        authorService.deleteAuthor(id);
-        return ResponseEntity.ok().build();
+        return authorService.deleteAuthor(id)
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
     }
 
     @GetMapping
-    public ResponseEntity<Page<AuthorDTO>> getAllAuthors(Pageable pageable) {
+    public ResponseEntity<Page<AuthorDTO>> getAllAuthors(
+            @RequestParam(required = false) String query,
+            Pageable pageable) {
+        if (query != null && !query.trim().isEmpty()) {
+            return ResponseEntity.ok(authorService.searchAuthors(query, pageable));
+        }
         return ResponseEntity.ok(authorService.getAllAuthors(pageable));
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<Page<AuthorDTO>> searchAuthors(@RequestParam String query, Pageable pageable) {
-        return ResponseEntity.ok(authorService.searchAuthors(query, pageable));
+    @GetMapping("/nationality/{nationality}")
+    public ResponseEntity<Page<AuthorDTO>> getAuthorsByNationality(
+            @PathVariable String nationality,
+            Pageable pageable) {
+        return ResponseEntity.ok(authorService.getAuthorsByNationality(nationality, pageable));
     }
 } 

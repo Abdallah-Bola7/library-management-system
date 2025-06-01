@@ -64,14 +64,22 @@ public class BorrowController {
         return ResponseEntity.ok(borrowService.getBookBorrowHistory(bookId, pageable));
     }
 
+    @GetMapping
+    @PreAuthorize("hasRole('STAFF') or hasRole('LIBRARIAN') or hasRole('ADMIN')")
+    public ResponseEntity<Page<BorrowRecordDTO>> getAllBorrowRecords(Pageable pageable) {
+        return ResponseEntity.ok(borrowService.getAllBorrowRecords(pageable));
+    }
+
+    @GetMapping("/current")
+    @PreAuthorize("hasRole('STAFF') or hasRole('LIBRARIAN') or hasRole('ADMIN')")
+    public ResponseEntity<Page<BorrowRecordDTO>> getCurrentBorrowings(Pageable pageable) {
+        return ResponseEntity.ok(borrowService.getCurrentBorrowings(pageable));
+    }
+
     @GetMapping("/overdue")
-    @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN')")
-    public ResponseEntity<List<BorrowRecordDTO>> getOverdueBooks(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime asOf) {
-        if (asOf == null) {
-            asOf = LocalDateTime.now();
-        }
-        return ResponseEntity.ok(borrowService.getOverdueBooks(asOf));
+    @PreAuthorize("hasRole('STAFF') or hasRole('LIBRARIAN') or hasRole('ADMIN')")
+    public ResponseEntity<Page<BorrowRecordDTO>> getOverdueBorrowings(Pageable pageable) {
+        return ResponseEntity.ok(borrowService.getOverdueBorrowings(pageable));
     }
 
     @PutMapping("/{borrowId}/extend")

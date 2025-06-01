@@ -23,6 +23,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     
     Page<Category> findByNameContainingIgnoreCase(String name, Pageable pageable);
     
+    
     boolean existsByNameIgnoreCase(String name);
     
     @Query("SELECT COUNT(b) FROM Category c JOIN c.books b WHERE c.id = :categoryId")
@@ -32,4 +33,21 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     
     @Query("SELECT c FROM Category c LEFT JOIN FETCH c.children WHERE c.id = :id")
     Optional<Category> findByIdWithChildren(@Param("id") Long id);
+    
+    @Query("SELECT c FROM Category c WHERE c.parent IS NULL")
+    Page<Category> findRootCategories(Pageable pageable);
+    
+    @Query("SELECT c FROM Category c WHERE c.parent.id = :parentId")
+    Page<Category> findByParentId(@Param("parentId") Long parentId, Pageable pageable);
+    
+    @Query("SELECT c FROM Category c WHERE " +
+           "LOWER(c.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+           "LOWER(c.description) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<Category> searchCategories(@Param("query") String query, Pageable pageable);
+    
+    @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.parent WHERE c.parent IS NULL")
+    List<Category> findAllRootCategories();
+    
+    @Query("SELECT DISTINCT c FROM Category c LEFT JOIN FETCH c.parent WHERE c.parent.id = :parentId")
+    List<Category> findAllByParentId(@Param("parentId") Long parentId);
 } 

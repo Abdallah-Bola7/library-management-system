@@ -16,10 +16,13 @@ public interface BorrowRecordRepository extends JpaRepository<BorrowRecord, Long
     
     Page<BorrowRecord> findByBookId(Long bookId, Pageable pageable);
     
-    List<BorrowRecord> findByStatus(BorrowStatus status);
+    Page<BorrowRecord> findByStatus(BorrowStatus status, Pageable pageable);
     
     @Query("SELECT br FROM BorrowRecord br WHERE br.dueDate < :now AND br.status = 'BORROWED'")
     List<BorrowRecord> findOverdueBooks(@Param("now") LocalDateTime now);
+    
+    @Query("SELECT br FROM BorrowRecord br WHERE br.dueDate < :now AND br.status = 'BORROWED'")
+    Page<BorrowRecord> findOverdueBorrowings(@Param("now") LocalDateTime now, Pageable pageable);
     
     @Query("SELECT br FROM BorrowRecord br WHERE br.member.id = :memberId AND br.status = 'BORROWED'")
     List<BorrowRecord> findCurrentBorrowings(@Param("memberId") Long memberId);

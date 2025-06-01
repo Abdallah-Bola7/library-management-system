@@ -29,38 +29,55 @@ public class CategoryController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('LIBRARIAN') or hasRole('ADMIN')")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryDTO categoryDTO) {
-        return ResponseEntity.ok(categoryService.updateCategory(id, categoryDTO));
+        return categoryService.updateCategory(id, categoryDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getCategory(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.getCategory(id));
+        return categoryService.getCategory(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.ok().build();
+        return categoryService.deleteCategory(id)
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
     }
 
     @GetMapping
-    public ResponseEntity<Page<CategoryDTO>> getAllCategories(Pageable pageable) {
+    public ResponseEntity<Page<CategoryDTO>> getAllCategories(
+            @RequestParam(required = false) String query,
+            Pageable pageable) {
+        if (query != null && !query.trim().isEmpty()) {
+            return ResponseEntity.ok(categoryService.searchCategories(query, pageable));
+        }
         return ResponseEntity.ok(categoryService.getAllCategories(pageable));
     }
 
     @GetMapping("/root")
-    public ResponseEntity<List<CategoryDTO>> getRootCategories() {
+    public ResponseEntity<Page<CategoryDTO>> getRootCategories(Pageable pageable) {
+        return ResponseEntity.ok(categoryService.getRootCategories(pageable));
+    }
+
+    @GetMapping("/root/all")
+    public ResponseEntity<List<CategoryDTO>> getAllRootCategories() {
         return ResponseEntity.ok(categoryService.getRootCategories());
     }
 
-    @GetMapping("/{id}/subcategories")
-    public ResponseEntity<List<CategoryDTO>> getSubcategories(@PathVariable Long id) {
-        return ResponseEntity.ok(categoryService.getSubcategories(id));
+    @GetMapping("/parent/{parentId}")
+    public ResponseEntity<Page<CategoryDTO>> getCategoriesByParent(
+            @PathVariable Long parentId,
+            Pageable pageable) {
+        return ResponseEntity.ok(categoryService.getCategoriesByParent(parentId, pageable));
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<Page<CategoryDTO>> searchCategories(@RequestParam String query, Pageable pageable) {
-        return ResponseEntity.ok(categoryService.searchCategories(query, pageable));
+    @GetMapping("/parent/{parentId}/all")
+    public ResponseEntity<List<CategoryDTO>> getAllSubcategories(@PathVariable Long parentId) {
+        return ResponseEntity.ok(categoryService.getSubcategories(parentId));
     }
 } 

@@ -246,4 +246,26 @@ public class BorrowServiceImpl implements BorrowService {
                 borrowRecord.getBook().getTitle(), 
                 borrowRecord.getMember().getFirstName() + " " + borrowRecord.getMember().getLastName());
     }
+
+    @Override
+    public Page<BorrowRecordDTO> getAllBorrowRecords(Pageable pageable) {
+        log.debug("Fetching all borrow records with pagination");
+        return borrowRecordRepository.findAll(pageable)
+                .map(borrowRecordMapper::toDTO);
+    }
+
+    @Override
+    public Page<BorrowRecordDTO> getCurrentBorrowings(Pageable pageable) {
+        log.debug("Fetching current borrowings with pagination");
+        return borrowRecordRepository.findByStatus(BorrowRecord.BorrowStatus.BORROWED, pageable)
+                .map(borrowRecordMapper::toDTO);
+    }
+
+    @Override
+    public Page<BorrowRecordDTO> getOverdueBorrowings(Pageable pageable) {
+        log.debug("Fetching overdue borrowings with pagination");
+        LocalDateTime now = LocalDateTime.now();
+        return borrowRecordRepository.findOverdueBorrowings(now, pageable)
+                .map(borrowRecordMapper::toDTO);
+    }
 } 

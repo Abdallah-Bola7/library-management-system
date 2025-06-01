@@ -8,6 +8,8 @@ import com.library.repository.AuthorRepository;
 import com.library.repository.BookRepository;
 import com.library.service.AuthorService;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,11 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
 @Transactional
 public class AuthorServiceImpl implements AuthorService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthorServiceImpl.class);
 
     @Autowired
     private AuthorRepository authorRepository;
@@ -32,6 +37,7 @@ public class AuthorServiceImpl implements AuthorService {
 
     @Override
     public AuthorDTO createAuthor(AuthorDTO authorDTO) {
+        log.debug("Creating new author: {}", authorDTO);
         Author author = authorMapper.toEntity(authorDTO);
         updateAuthorRelations(author, authorDTO);
         Author savedAuthor = authorRepository.save(author);
@@ -39,38 +45,52 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public AuthorDTO updateAuthor(Long id, AuthorDTO authorDTO) {
-        Author author = authorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Author not found with id: " + id));
-        authorMapper.toEntity(authorDTO);
-        updateAuthorRelations(author, authorDTO);
-        Author updatedAuthor = authorRepository.save(author);
-        return authorMapper.toDTO(updatedAuthor);
+    public Optional<AuthorDTO> updateAuthor(Long id, AuthorDTO authorDTO) {
+        log.debug("Updating author with ID: {}", id);
+        return authorRepository.findById(id)
+                .map(existingAuthor -> {
+                    Author updatedAuthor = authorMapper.toEntity(authorDTO);
+                    updatedAuthor.setId(id);
+                    updateAuthorRelations(updatedAuthor, authorDTO);
+                    return authorMapper.toDTO(authorRepository.save(updatedAuthor));
+                });
     }
 
     @Override
-    public AuthorDTO getAuthor(Long id) {
-        Author author = authorRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Author not found with id: " + id));
-        return authorMapper.toDTO(author);
+    public Optional<AuthorDTO> getAuthor(Long id) {
+        log.debug("Fetching author with ID: {}", id);
+        return authorRepository.findById(id)
+                .map(authorMapper::toDTO);
     }
 
     @Override
-    public void deleteAuthor(Long id) {
-        if (!authorRepository.existsById(id)) {
-            throw new EntityNotFoundException("Author not found with id: " + id);
+    public boolean deleteAuthor(Long id) {
+        log.debug("Deleting author with ID: {}", id);
+        if (authorRepository.existsById(id)) {
+            authorRepository.deleteById(id);
+            return true;
         }
-        authorRepository.deleteById(id);
+        return false;
     }
 
     @Override
     public Page<AuthorDTO> getAllAuthors(Pageable pageable) {
-        return authorRepository.findAll(pageable).map(authorMapper::toDTO);
+        log.debug("Fetching all authors with pagination");
+        return authorRepository.findAll(pageable)
+                .map(authorMapper::toDTO);
     }
 
     @Override
     public Page<AuthorDTO> searchAuthors(String query, Pageable pageable) {
-        return authorRepository.findByNameContainingIgnoreCase(query, pageable)
+        log.debug("Searching authors with query: {} and pagination", query);
+        return authorRepository.searchAuthors(query, pageable)
+                .map(authorMapper::toDTO);
+    }
+
+    @Override
+    public Page<AuthorDTO> getAuthorsByNationality(String nationality, Pageable pageable) {
+        log.debug("Fetching authors by nationality: {} with pagination", nationality);
+        return authorRepository.findByNationality(nationality, pageable)
                 .map(authorMapper::toDTO);
     }
 
