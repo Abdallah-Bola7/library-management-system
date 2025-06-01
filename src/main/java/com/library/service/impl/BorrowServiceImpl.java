@@ -56,7 +56,7 @@ public class BorrowServiceImpl implements BorrowService {
         log.info("Starting borrow process for book ID: {}, member ID: {}, issued by ID: {}", bookId, memberId, issuedById);
 
         // Validate book availability
-        if (!bookService.isBookAvailable(bookId)) {
+        if (!bookService.isBookAvailable(bookId).orElse(false)) {
             log.warn("Book ID: {} is not available for borrowing", bookId);
             throw new IllegalStateException("Book is not available for borrowing");
         }
