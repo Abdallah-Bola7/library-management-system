@@ -29,15 +29,11 @@ public interface AuthorRepository extends JpaRepository<Author, Long> {
     
     boolean existsByNameIgnoreCase(String name);
     
-    Page<Author> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-            String firstName, String lastName, Pageable pageable);
-    
     Page<Author> findByNationality(String nationality, Pageable pageable);
     
     @Query("SELECT DISTINCT a.nationality FROM Author a WHERE a.nationality IS NOT NULL")
     List<String> findAllNationalities();
     
-    @Query("SELECT a FROM Author a WHERE " +
-           "LOWER(CONCAT(a.firstName, ' ', a.lastName)) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT a FROM Author a WHERE LOWER(a.name) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<Author> searchAuthors(@Param("query") String query, Pageable pageable);
 } 

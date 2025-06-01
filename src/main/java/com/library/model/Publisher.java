@@ -23,6 +23,7 @@ public class Publisher {
     private String phone;
     private String email;
     private String website;
+    private String country;
 
     @OneToMany(mappedBy = "publisher")
     private Set<Book> books = new HashSet<>();

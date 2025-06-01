@@ -18,5 +18,6 @@ public class PublisherDTO {
     private String phone;
     private String email;
     private String website;
+    private String country;
     private Set<Long> bookIds = new HashSet<>();
 } 
