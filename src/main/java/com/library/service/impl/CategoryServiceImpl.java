@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,35 +38,34 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDTO updateCategory(Long id, CategoryDTO categoryDTO) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
-        updateCategoryFromDTO(category, categoryDTO);
-        Category updatedCategory = categoryRepository.save(category);
-        return convertToDTO(updatedCategory);
+    public Optional<CategoryDTO> updateCategory(Long id, CategoryDTO categoryDTO) {
+        return categoryRepository.findById(id)
+                .map(category -> {
+                    updateCategoryFromDTO(category, categoryDTO);
+                    return convertToDTO(categoryRepository.save(category));
+                });
     }
 
     @Override
-    public CategoryDTO getCategory(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
-        return convertToDTO(category);
+    public Optional<CategoryDTO> getCategory(Long id) {
+        return categoryRepository.findById(id)
+                .map(this::convertToDTO);
     }
 
     @Override
-    public void deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not found with id: " + id));
-        
-        if (!category.getChildren().isEmpty()) {
-            throw new IllegalStateException("Cannot delete category with subcategories");
+    public boolean deleteCategory(Long id) {
+        if (categoryRepository.existsById(id)) {
+            Category category = categoryRepository.findById(id).get();
+            if (!category.getChildren().isEmpty()) {
+                throw new IllegalStateException("Cannot delete category with subcategories");
+            }
+            if (!category.getBooks().isEmpty()) {
+                throw new IllegalStateException("Cannot delete category with associated books");
+            }
+            categoryRepository.deleteById(id);
+            return true;
         }
-        
-        if (!category.getBooks().isEmpty()) {
-            throw new IllegalStateException("Cannot delete category with associated books");
-        }
-        
-        categoryRepository.deleteById(id);
+        return false;
     }
 
     @Override
@@ -74,23 +74,35 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public List<CategoryDTO> getRootCategories() {
-        return categoryRepository.findByParentIsNull().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<CategoryDTO> getRootCategories(Pageable pageable) {
+        return categoryRepository.findRootCategories(pageable)
+                .map(this::convertToDTO);
     }
 
     @Override
-    public List<CategoryDTO> getSubcategories(Long parentId) {
-        return categoryRepository.findByParentId(parentId).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public Page<CategoryDTO> getCategoriesByParent(Long parentId, Pageable pageable) {
+        return categoryRepository.findByParentId(parentId, pageable)
+                .map(this::convertToDTO);
     }
 
     @Override
     public Page<CategoryDTO> searchCategories(String query, Pageable pageable) {
         return categoryRepository.findByNameContainingIgnoreCase(query, pageable)
                 .map(this::convertToDTO);
+    }
+
+    @Override
+    public List<CategoryDTO> getRootCategories() {
+        return categoryRepository.findAllRootCategories().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CategoryDTO> getSubcategories(Long parentId) {
+        return categoryRepository.findAllByParentId(parentId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     private void updateCategoryFromDTO(Category category, CategoryDTO dto) {

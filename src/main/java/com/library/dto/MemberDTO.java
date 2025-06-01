@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.Set;
+
 @Data
 public class MemberDTO {
     private Long id;
@@ -23,4 +25,5 @@ public class MemberDTO {
     private String address;
     private String membershipNumber;
     private MembershipStatus status;
+    private Set<Long> borrowRecordIds;
 } 
